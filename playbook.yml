@@ -4,10 +4,9 @@
   hosts: all
   become: true
   vars:
-    # --- Configuration Variables ---
+    # Variables - default values
     aws_region: "us-east-1"
-    ecr_repo_name: "minecraft-server"
-    s3_bucket_name: "my-minecraft-backups-bucket"
+    s3_bucket_name: "ops3-world"
     minecraft_image: "{{ ecr_url }}/{{ ecr_repo_name }}:{{ ecr_image_tag }}"
     world_data_path: "/opt/minecraft/world"
 

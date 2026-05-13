@@ -152,7 +152,7 @@ provisioner "local-exec" {
     command = <<EOT
       ansible-playbook -i '${aws_instance.ops3_minecraft_node.public_ip},' \
       --private-key ${var.ssh_key_path} \
-      --extra-vars "aws_account_id=${local.account_id} ecr_url=${aws_ecr_repository.ops3_ecr.repository_url} s3_bucket_name=${var.s3_bucket} ecr_image_tag=${var.image_tag}" \
+      --extra-vars "aws_account_id=${local.account_id} ecr_url=${aws_ecr_repository.ops3_ecr.repository_url} s3_bucket_name=${var.s3_bucket} ecr_repo_name=${var.repo_name} ecr_image_tag=${var.image_tag}" \
       playbook.yml
     EOT
   }

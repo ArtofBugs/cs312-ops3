@@ -31,3 +31,9 @@ variable "image_tag" {
   description = "Tag to pull from ECR"
   type = string
 }
+
+variable "repo_name" {
+  description = "Repository to pull from in ECR"
+  type = string
+  default = "ops3-minecraft"
+}
