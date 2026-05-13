@@ -1,24 +1,19 @@
-output "control_node_public_ip" {
-  description = "Public IP of the control node: SSH here from your laptop"
-  value       = aws_instance.control.public_ip
+output "minecraft_node_public_ip" {
+  description = "Public IP of the Minecraft node"
+  value       = aws_instance.ops3_minecraft_node.public_ip
 }
 
-output "managed_node_public_ip" {
-  description = "Public IP of the managed node: WordPress will be accessible here"
-  value       = aws_instance.managed.public_ip
-}
-
-output "managed_node_private_ip" {
-  description = "Private IP of the managed node: use this in the Ansible inventory"
-  value       = aws_instance.managed.private_ip
+output "minecraft_node_private_ip" {
+  description = "Private IP of the Minecraft node, used in the Ansible inventory"
+  value       = aws_instance.ops3_minecraft_node.private_ip
 }
 
 output "ecr_repository_url" {
-  description = "ECR repository URL: use this in the GitHub Actions workflow"
-  value       = aws_ecr_repository.wordpress.repository_url
+  description = "ECR repository URL, used in the GitHub Actions workflow"
+  value       = aws_ecr_repository.ops3_ecr.repository_url
 }
 
 output "vpc_id" {
   description = "ID of the provisioned VPC"
-  value       = aws_vpc.cs312.id
+  value       = aws_vpc.ops3.id
 }
