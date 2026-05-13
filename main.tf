@@ -12,7 +12,6 @@ terraform {
 provider "aws" {
   region = "us-east-1"
 }
-# FIXME: This fails without credentials; I am already using LabInstanceProfile to create the instance, so is it still ok for credentials to exist on my local machine as an admin?
 
 # Create VPC
 resource "aws_vpc" "ops3" {
@@ -122,5 +121,39 @@ resource "aws_ecr_repository" "ops3_ecr" {
 
   image_scanning_configuration {
     scan_on_push = false
+  }
+}
+
+# https://stackoverflow.com/a/68398082
+data "aws_caller_identity" "current" {}
+
+locals {
+    account_id = data.aws_caller_identity.current.account_id
+}
+
+resource "null_resource" "ansible_bridge" {
+  # Ensure this only runs AFTER the instance is up
+  depends_on = [aws_instance.ops3_minecraft_node]
+
+  # This block waits until SSH is actually responding
+  provisioner "remote-exec" {
+    inline = ["echo 'SSH is up!'"]
+
+    connection {
+      type        = "ssh"
+      user        = "ubuntu"
+      private_key = file(var.ssh_key_path)
+      host        = aws_instance.ops3_minecraft_node.public_ip
+    }
+  }
+
+  # Now that SSH is confirmed, run Ansible locally
+provisioner "local-exec" {
+    command = <<EOT
+      ansible-playbook -i '${aws_instance.ops3_minecraft_node.public_ip},' \
+      --private-key ${var.ssh_key_path} \
+      --extra-vars "aws_account_id=${local.account_id} ecr_url=${aws_ecr_repository.ops3_ecr.repository_url} s3_bucket_name=${var.s3_bucket} ecr_image_tag=${var.image_tag}" \
+      playbook.yml
+    EOT
   }
 }

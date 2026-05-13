@@ -1,0 +1,73 @@
+---
+- name: Deploy Minecraft Server from ECR
+  user: ubuntu
+  hosts: all
+  become: true
+  vars:
+    # --- Configuration Variables ---
+    aws_region: "us-east-1"
+    ecr_repo_name: "minecraft-server"
+    s3_bucket_name: "my-minecraft-backups-bucket"
+    minecraft_image: "{{ ecr_url }}/{{ ecr_repo_name }}:{{ ecr_image_tag }}"
+    world_data_path: "/opt/minecraft/world"
+
+  tasks:
+    - name: Install Runtime Prerequisites (Docker and AWS CLI)
+      apt:
+        name:
+          - docker.io
+          - awscli
+        state: present
+        update_cache: yes
+
+    - name: Ensure Docker service is started and enabled
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Create local directory for world data persistence
+      file:
+        path: "{{ world_data_path }}"
+        state: directory
+        mode: '0755'
+        owner: ubuntu
+        group: ubuntu
+
+    - name: Authenticate Docker to ECR using Instance Profile
+      shell: |
+        aws ecr get-login-password --region {{ aws_region }} | \
+        docker login --username AWS --password-stdin {{ ecr_url }}
+      changed_when: false
+
+    - name: Pull pinned Minecraft image from ECR
+      community.docker.docker_image:
+        name: "{{ ecr_url }}:{{ ecr_image_tag }}"
+        source: pull
+
+    - name: Restore world data from S3
+      shell: "aws s3 sync s3://{{ s3_bucket_name }}/world/ {{ world_data_path }}/"
+      register: s3_sync_result
+      changed_when: "'Completed' in s3_sync_result.stdout"
+
+    - name: Start Minecraft server container
+      community.docker.docker_container:
+        name: minecraft-server
+        image: "{{ ecr_url }}:{{ ecr_image_tag }}"
+        state: started
+        restart_policy: always
+        ports:
+          - "25565:25565"
+        volumes:
+          - "{{ world_data_path }}:/data"
+        env:
+          MOTD: "wengor"
+    - name: Start Minecraft Container
+      community.docker.docker_container:
+        name: minecraft
+        state: started
+        restart_policy: always
+        published_ports:
+          - "25565:25565"
+        volumes:
+          - /opt/minecraft:/data

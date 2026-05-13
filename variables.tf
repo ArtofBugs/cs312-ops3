@@ -13,4 +13,21 @@ variable "instance_type" {
 variable "key_name" {
   description = "Name of the SSH key pair (must already exist in AWS)"
   type        = string
+  default = "cs312-key"
+}
+
+variable "ssh_key_path" {
+  description = "Path to the SSH private key"
+  type        = string
+  default = "~/Downloads/cs312-key.pem"
+}
+
+variable "s3_bucket" {
+  description = "Name of S3 bucket containing world backups"
+  type = string
+}
+
+variable "image_tag" {
+  description = "Tag to pull from ECR"
+  type = string
 }
