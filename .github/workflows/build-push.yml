@@ -37,13 +37,23 @@ jobs:
       - name: Smoke test
         run: |
           docker run -d -p 25565:25565 --name smoke-test -v mc_data:/opt/minecraft/world:rw -e MOTD=${{ env.MOTD }} ${{ env.ECR_REPOSITORY }}:${{ github.ref_name }}
-          for i in $(seq 1 33); do sleep 10 && docker logs smoke-test | grep 'Done'; STATUS=$?; done
+          for i in $(seq 1 33); do
+            sleep 10
+            # Check if 'Done' exists in the logs
+            if docker logs smoke-test | grep -q 'Done'; then
+              echo "Smoke test passed!"
+              STATUS=0
+              break
+            else
+              echo "Waiting for 'Done' in logs... (Attempt $i/33)"
+            fi
+          done
           docker stop smoke-test
+          docker rm smoke-test
           if [ $STATUS != 0 ]; then
-            echo "Smoke test failed with status $STATUS"
+            echo "Smoke test failed with status $STATUS, 'Done' not found in logs."
             exit 1
           fi
-          echo "Smoke test passed with status $STATUS"
 
       - name: Tag and push to ECR
         env:
