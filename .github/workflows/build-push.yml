@@ -13,6 +13,8 @@ env:
 jobs:
   build-test-push:
     runs-on: ubuntu-latest
+    # Don't run unless lint passes for Dockerfile
+    needs: lint
 
     steps:
       - name: Checkout code
