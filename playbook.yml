@@ -9,6 +9,7 @@
     s3_bucket_name: "ops3-world"
     minecraft_image: "{{ ecr_url }}/{{ ecr_repo_name }}:{{ ecr_image_tag }}"
     world_data_path: "/opt/minecraft/world"
+    motd: "wengor"
 
   tasks:
     - name: Install Runtime Prerequisites (Docker and AWS CLI)
@@ -55,18 +56,9 @@
         image: "{{ ecr_url }}:{{ ecr_image_tag }}"
         state: started
         restart_policy: always
-        ports:
+        published_ports:
           - "25565:25565"
         volumes:
           - "{{ world_data_path }}:/data"
         env:
-          MOTD: "wengor"
-    - name: Start Minecraft Container
-      community.docker.docker_container:
-        name: minecraft
-        state: started
-        restart_policy: always
-        published_ports:
-          - "25565:25565"
-        volumes:
-          - /opt/minecraft:/data
+          MOTD: "{{ motd }}"
