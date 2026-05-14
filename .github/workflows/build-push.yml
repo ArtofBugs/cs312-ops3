@@ -7,7 +7,7 @@ on:
 
 env:
   AWS_REGION: us-east-1
-  ECR_REPOSITORY: ops3_ecr
+  ECR_REPOSITORY: ops3-ecr
   MOTD: ArtofBugs
 
 jobs:
