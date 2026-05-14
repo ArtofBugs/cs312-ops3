@@ -38,7 +38,7 @@ jobs:
         run: |
           docker run -d -p 25565:25565 --name smoke-test -v mc_data:/opt/minecraft/world:rw -e MOTD=${{ env.MOTD }} ${{ env.ECR_REPOSITORY }}:${{ github.ref_name }}
           for i in $(seq 1 33); do sleep 10 && docker logs smoke-test | grep 'Done'; STATUS=$?; done
-          docker stop ${{ env.ECR_REPOSITORY }}:${{ github.ref_name }}
+          docker stop smoke-test
           if [ $STATUS != 0 ]; then
             echo "Smoke test failed with status $STATUS"
             exit 1
