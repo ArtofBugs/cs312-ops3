@@ -9,7 +9,7 @@
     s3_bucket_name: "ops3-world"
     minecraft_image: "{{ ecr_url }}/{{ ecr_repo_name }}:{{ ecr_image_tag }}"
     world_data_path: "/opt/minecraft/world"
-    motd: "wengor"
+    motd: "wengor-ops3"
 
   tasks:
     - name: Install Runtime Prerequisites (Docker and AWS CLI)
