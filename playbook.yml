@@ -6,11 +6,9 @@
   vars:
     # Variables - default values
     aws_region: "us-east-1"
-    s3_bucket_name: "ops3-world"
     minecraft_image: "{{ ecr_url }}/{{ ecr_repo_name }}:{{ ecr_image_tag }}"
-    world_data_path: "/opt/minecraft/world"
     mount_data_path: "/home/ubuntu/data"
-    temp_data_path: "/tmp/restore.tar"
+    world_data_path: "/opt/minecraft/world"
     motd: "wengor-ops3"
 
   tasks:
@@ -47,16 +45,14 @@
         name: "{{ ecr_url }}:{{ ecr_image_tag }}"
         source: pull
 
-    - name: Pull world data backup from S3
-      shell: "aws s3 cp s3://{{ s3_bucket_name }}/backups/backup.tar {{ temp_data_path }}"
-      args:
-        creates: "{{ temp_data_path }}"
-
-    - name: Extract backup to world data directory
-      ansible.builtin.unarchive:
-        src: "{{ temp_data_path }}"
-        dest: "{{ mount_data_path }}"
-        remote_src: yes
+    - name: Pull and extra world data backup from S3
+      ansible.builtin.include_role:
+        name: backups
+      vars:
+        s3_bucket_name: "{{ s3_bucket_name }}"
+        data_destination_path: "{{ mount_data_path }}"
+        temp_backup_path: "/tmp/restore.tar"
+        user: "ubuntu"
 
     - name: Start Minecraft server container
       community.docker.docker_container:
