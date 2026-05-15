@@ -9,6 +9,8 @@
     s3_bucket_name: "ops3-world"
     minecraft_image: "{{ ecr_url }}/{{ ecr_repo_name }}:{{ ecr_image_tag }}"
     world_data_path: "/opt/minecraft/world"
+    mount_data_path: "/home/ubuntu/data"
+    temp_data_path: "/tmp/restore.tar"
     motd: "wengor-ops3"
 
   tasks:
@@ -26,9 +28,9 @@
         state: started
         enabled: yes
 
-    - name: Create local directory for world data persistence
+    - name: Create world data directory which will be mounted as a volume
       file:
-        path: "{{ world_data_path }}"
+        path: "{{ mount_data_path }}"
         state: directory
         mode: '0755'
         owner: ubuntu
@@ -45,10 +47,16 @@
         name: "{{ ecr_url }}:{{ ecr_image_tag }}"
         source: pull
 
-    - name: Restore world data from S3
-      shell: "aws s3 sync s3://{{ s3_bucket_name }}/world/ {{ world_data_path }}/"
-      register: s3_sync_result
-      changed_when: "'Completed' in s3_sync_result.stdout"
+    - name: Pull world data backup from S3
+      shell: "aws s3 cp s3://{{ s3_bucket_name }}/backups/backup.tar {{ temp_data_path }}"
+      args:
+        creates: "{{ temp_data_path }}"
+
+    - name: Extract backup to world data directory
+      ansible.builtin.unarchive:
+        src: "{{ temp_data_path }}"
+        dest: "{{ mount_data_path }}"
+        remote_src: yes
 
     - name: Start Minecraft server container
       community.docker.docker_container:
@@ -59,6 +67,6 @@
         published_ports:
           - "25565:25565"
         volumes:
-          - "{{ world_data_path }}:/data"
+          - "{{ mount_data_path }}{{ world_data_path }}:{{ world_data_path }}:rw"
         env:
           MOTD: "{{ motd }}"
