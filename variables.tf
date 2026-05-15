@@ -25,11 +25,13 @@ variable "ssh_key_path" {
 variable "ecr_url" {
   description = "URL of the ECR repository containing container images"
   type = string
+  default = ""
 }
 
 variable "s3_bucket" {
   description = "Name of S3 bucket containing world backups"
   type = string
+  default = ""
 }
 
 variable "image_tag" {
