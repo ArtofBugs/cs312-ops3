@@ -22,14 +22,20 @@ variable "ssh_key_path" {
   default = "~/Downloads/cs312-key.pem"
 }
 
+variable "ecr_url" {
+  description = "URL of the ECR repository containing container images"
+  type = string
+}
+
 variable "s3_bucket" {
   description = "Name of S3 bucket containing world backups"
   type = string
 }
 
 variable "image_tag" {
-  description = "Tag to pull from ECR"
+  description = "Tag of the container image to pull from ECR"
   type = string
+  default = "v1.0.0"
 }
 
 variable "repo_name" {

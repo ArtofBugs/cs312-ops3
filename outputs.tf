@@ -8,11 +8,6 @@ output "minecraft_node_private_ip" {
   value       = aws_instance.ops3_minecraft_node.private_ip
 }
 
-output "ecr_repository_url" {
-  description = "ECR repository URL, used in the GitHub Actions workflow"
-  value       = aws_ecr_repository.ops3_ecr.repository_url
-}
-
 output "vpc_id" {
   description = "ID of the provisioned VPC"
   value       = aws_vpc.ops3.id

@@ -114,17 +114,8 @@ resource "aws_instance" "ops3_minecraft_node" {
   }
 }
 
-# ECR repository for the CI/CD pipeline
-resource "aws_ecr_repository" "ops3_ecr" {
-  name                 = "ops3-ecr"
-  image_tag_mutability = "IMMUTABLE"
-
-  image_scanning_configuration {
-    scan_on_push = false
-  }
-}
-
 # https://stackoverflow.com/a/68398082
+# Create a local variable for the account ID based on AWS data
 data "aws_caller_identity" "current" {}
 
 locals {
@@ -134,6 +125,10 @@ locals {
 resource "null_resource" "ansible_bridge" {
   # Ensure this only runs AFTER the instance is up
   depends_on = [aws_instance.ops3_minecraft_node]
+  # Rerun if playbook has been changed
+  triggers = {
+    playbook_hash = filesha256("playbook.yml")
+  }
 
   # This block waits until SSH is actually responding
   provisioner "remote-exec" {
@@ -148,11 +143,11 @@ resource "null_resource" "ansible_bridge" {
   }
 
   # Now that SSH is confirmed, run Ansible locally
-provisioner "local-exec" {
+  provisioner "local-exec" {
     command = <<EOT
       ansible-playbook -i '${aws_instance.ops3_minecraft_node.public_ip},' \
       --private-key ${var.ssh_key_path} \
-      --extra-vars "aws_account_id=${local.account_id} ecr_url=${aws_ecr_repository.ops3_ecr.repository_url} s3_bucket_name=${var.s3_bucket} ecr_repo_name=${var.repo_name} ecr_image_tag=${var.image_tag}" \
+      --extra-vars "aws_account_id=${local.account_id} ecr_url=${var.ecr_url} s3_bucket_name=${var.s3_bucket} ecr_repo_name=${var.repo_name} ecr_image_tag=${var.image_tag}" \
       playbook.yml
     EOT
   }
